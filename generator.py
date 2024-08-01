@@ -13,7 +13,8 @@ LNAME_PATH =  BASE_PATH + '/datasets/new-top-surnames.csv'
 CITY_PATH = BASE_PATH + '/datasets/worldcities.csv'
 PRODUCT_PATH = BASE_PATH + '/datasets/products.csv'
 OUT_PATH = BASE_PATH + '/datasets/output.csv'
-OUT_LENGTH = 10000
+OUT_LENGTH = 15000
+CUSTOMER_AND_PRODUCTS_LENGTH = 1000
 
 #creating list of first names
 fnames = []
@@ -31,7 +32,7 @@ with open(LNAME_PATH, 'r') as file:
 
 #generating list of customers with randomly generated ID [NAME, ID]
 customers = []
-for i in range(1000):
+for i in range(CUSTOMER_AND_PRODUCTS_LENGTH):
     #Randomly generated customer ID
     custID = ''.join([random.choice(string.ascii_letters
         + string.digits) for n in range(16)])
@@ -42,30 +43,26 @@ for i in range(1000):
 
     customers.append([name, custID])
 
-#creating list of cities (top 100 most populous) [CITY, COUNTRY]
+#creating list of cities[CITY, COUNTRY]
 cities = []
 with open(CITY_PATH, 'r', encoding="utf8") as file:
     cityReader = csv.reader(file)
     for entry in cityReader:
         cities.append([entry[0], entry[4], entry[9]])
 
+#selecting only top 100 most populous cities
 cities = sorted(cities, key = lambda x: x[2])
-
 cities = cities[0:100]
 
 #creating product list of products: [NAME, CATEGORY, ID, PRICE]
 products = []
 with open(PRODUCT_PATH, 'r', encoding="utf8") as file:
-    hash = hashlib.sha1()
     productReader = csv.reader(file)
     i = 0
     for entry in productReader:
         if(i == 0):
-            i = 1 
+            i += 1 
             continue
-        #Dataset doesn't include product ID - generating one by hashing the product name
-        hash.update(entry[1].encode())
-        id = str(hash.hexdigest())
         price = re.sub('[^0-9.]','', entry[9])
         if price is not '': price = round(float(price)*0.012, 2)
         else: continue
@@ -74,7 +71,7 @@ with open(PRODUCT_PATH, 'r', encoding="utf8") as file:
 
 #randomly select 1000 from the list of 500,000 products
 newProducts = []
-for i in range(1000):
+for i in range(CUSTOMER_AND_PRODUCTS_LENGTH):
     productsIndex = random.randint(0, len(products)-1)
     newProducts.append(products[productsIndex])
 products = newProducts
@@ -86,11 +83,11 @@ with open(OUT_PATH, 'w+', encoding="utf8", newline = '') as file:
     out.writerow(headers)
 
     #creating list of random indices generated on a normal distribution
-    randomNormalIndices = np.random.normal(500, 250, OUT_LENGTH)
+    randomNormalIndices = np.random.normal(CUSTOMER_AND_PRODUCTS_LENGTH/2, CUSTOMER_AND_PRODUCTS_LENGTH/4, OUT_LENGTH)
     randomAdjustedIndices = []
     for i in randomNormalIndices:
         i = int(i)
-        if i >= 0 and i < 1000:
+        if i >= 0 and i < CUSTOMER_AND_PRODUCTS_LENGTH:
             randomAdjustedIndices.append(i)
 
     for i in range(OUT_LENGTH):
@@ -98,7 +95,7 @@ with open(OUT_PATH, 'w+', encoding="utf8", newline = '') as file:
         orderID = ''.join([random.choice(string.ascii_letters
             + string.digits) for n in range(24)])
         
-        #Randomly selecting index from list of normally distributed indices and selectin customer with selected index
+        #Randomly selecting index from list of normally distributed indices and selecting customer with selected index
         randIndex = random.randint(0, len(randomAdjustedIndices)-1)
         randIndexC = randomAdjustedIndices[randIndex]
         customer = customers[randIndexC]
@@ -156,9 +153,7 @@ with open(OUT_PATH, 'w+', encoding="utf8", newline = '') as file:
         corruption = random.randint(1, 100)
         if (corruption <= 5):
             corruptedField = random.randint(0, 15)
-            rand = ''.join([random.choice(string.ascii_letters
-                + string.digits) for n in range(8)])
-            corruptionType = random.choice(['CORRUPTED', None, rand])
+            corruptionType = random.choice(['CORRUPTED', None])
             row[corruptedField] = corruptionType
 
         out.writerow(row)

@@ -3,6 +3,7 @@ import hashlib
 import random
 import string
 import datetime
+import numpy as np
 import re
 
 #paths for datasets and output
@@ -12,6 +13,7 @@ LNAME_PATH =  BASE_PATH + '/datasets/new-top-surnames.csv'
 CITY_PATH = BASE_PATH + '/datasets/worldcities.csv'
 PRODUCT_PATH = BASE_PATH + '/datasets/products.csv'
 OUT_PATH = BASE_PATH + '/datasets/output.csv'
+OUT_LENGTH = 10000
 
 #creating list of first names
 fnames = []
@@ -40,12 +42,16 @@ for i in range(1000):
 
     customers.append([name, custID])
 
-#creating list of cities [CITY, COUNTRY]
+#creating list of cities (top 100 most populous) [CITY, COUNTRY]
 cities = []
 with open(CITY_PATH, 'r', encoding="utf8") as file:
     cityReader = csv.reader(file)
     for entry in cityReader:
-        cities.append([entry[0], entry[4]])
+        cities.append([entry[0], entry[4], entry[9]])
+
+cities = sorted(cities, key = lambda x: x[2])
+
+cities = cities[0:100]
 
 #creating product list of products: [NAME, CATEGORY, ID, PRICE]
 products = []
@@ -57,31 +63,49 @@ with open(PRODUCT_PATH, 'r', encoding="utf8") as file:
         if(i == 0):
             i = 1 
             continue
-        i+=1
         #Dataset doesn't include product ID - generating one by hashing the product name
         hash.update(entry[1].encode())
         id = str(hash.hexdigest())
         price = re.sub('[^0-9.]','', entry[9])
         if price is not '': price = round(float(price)*0.012, 2)
         else: continue
-        products.append([entry[1], entry[2], id, price])
+        products.append([entry[1], entry[2], i, price])
+        i+=1
+
+#randomly select 1000 from the list of 500,000 products
+newProducts = []
+for i in range(1000):
+    productsIndex = random.randint(0, len(products)-1)
+    newProducts.append(products[productsIndex])
+products = newProducts
 
 #Generating list of random products
 with open(OUT_PATH, 'w+', encoding="utf8", newline = '') as file:
     out = csv.writer(file)
     headers = ['order_id', 'customer_id', 'customer_name', 'product_id', 'product_name', 'product_category', 'payment_type', 'qty', 'price', 'datetime', 'country', 'city', 'ecommerce_website_name', 'payment_txn_id', 'payment_txn_success', 'failure reason']
     out.writerow(headers)
-    for i in range(10000):
+
+    #creating list of random indices generated on a normal distribution
+    randomNormalIndices = np.random.normal(500, 250, OUT_LENGTH)
+    randomAdjustedIndices = []
+    for i in randomNormalIndices:
+        i = int(i)
+        if i >= 0 and i < 1000:
+            randomAdjustedIndices.append(i)
+
+    for i in range(OUT_LENGTH):
         #Randomly generated order ID
         orderID = ''.join([random.choice(string.ascii_letters
             + string.digits) for n in range(24)])
         
-        #Randomly selecting customer
-        randIndexC = random.randint(0, len(customers)-1)
+        #Randomly selecting index from list of normally distributed indices and selectin customer with selected index
+        randIndex = random.randint(0, len(randomAdjustedIndices)-1)
+        randIndexC = randomAdjustedIndices[randIndex]
         customer = customers[randIndexC]
 
         #Randomly selecting product
-        randIndexP = random.randint(0, len(products)-1)
+        randIndex = random.randint(0, len(randomAdjustedIndices)-1)
+        randIndexP = randomAdjustedIndices[randIndex]
         product = products[randIndexP]
 
         #Randomly selecting payment choice from list
@@ -91,7 +115,7 @@ with open(OUT_PATH, 'w+', encoding="utf8", newline = '') as file:
         qty = random.randint(1, 10)
         
         #Random date between start (2012) and end (now)
-        start = datetime.date(2012, 1, 1)
+        start = datetime.date(2022, 1, 1)
         end = datetime.datetime.now().date()
         diff = end - start
         diff = diff.days

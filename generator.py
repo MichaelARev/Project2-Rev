@@ -87,7 +87,7 @@ with open(OUT_PATH, 'w+', encoding="utf8", newline = '') as file:
         #Randomly selecting payment choice from list
         payment_type = random.choice(['Card', 'Internet Banking', 'UPI', 'Wallet'])
 
-        #Random quantity between 0 and 100
+        #Random quantity between 1 and 10
         qty = random.randint(1, 10)
         
         #Random date between start (2012) and end (now)
@@ -104,7 +104,10 @@ with open(OUT_PATH, 'w+', encoding="utf8", newline = '') as file:
         city = cities[randindexC]
 
         #Randomly selecting website from list
-        website = random.choice(['Amazon', 'eBay', 'Walmart', 'Wayfair', 'Apple', 'Home Depot', 'Costco', 'Alibaba', 'Best Buy', 'Nike', 'Etsy'])
+        website = random.choice(['www.amazon.com', 'www.ebay.com', 'www.walmart.com', 
+                                 'www.wayfair.com', 'www.apple.com', 'www.homedepot.com', 
+                                 'www.costco.com', 'www.alibaba.com', 'www.bestbuy.com', 
+                                 'www.nike.com', 'www.etsy.com'])
 
         paymentID = ''.join([random.choice(string.ascii_letters
             + string.digits) for n in range(16)])
@@ -125,10 +128,13 @@ with open(OUT_PATH, 'w+', encoding="utf8", newline = '') as file:
                city[1], city[0], website, paymentID,
                 success, reason]
         
+        #corrupting ~5 percent of entries with either 'CORRUPTED' or empty field
         corruption = random.randint(1, 100)
         if (corruption <= 5):
             corruptedField = random.randint(0, 15)
-            corruptionType = random.choice(['CORRUPTED', None])
+            rand = ''.join([random.choice(string.ascii_letters
+                + string.digits) for n in range(8)])
+            corruptionType = random.choice(['CORRUPTED', None, rand])
             row[corruptedField] = corruptionType
 
         out.writerow(row)

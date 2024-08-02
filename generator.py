@@ -1,5 +1,4 @@
 import csv
-import hashlib
 import random
 import string
 import datetime
@@ -51,7 +50,7 @@ with open(CITY_PATH, 'r', encoding="utf8") as file:
         cities.append([entry[0], entry[4], entry[9]])
 
 #selecting only top 100 most populous cities
-cities = sorted(cities, key = lambda x: x[2])
+cities = sorted(cities, key = lambda x: x[2], reverse=True)
 cities = cities[0:100]
 
 #creating product list of products: [NAME, CATEGORY, ID, PRICE]
@@ -79,7 +78,12 @@ products = newProducts
 #Generating list of random products
 with open(OUT_PATH, 'w+', encoding="utf8", newline = '') as file:
     out = csv.writer(file)
-    headers = ['order_id', 'customer_id', 'customer_name', 'product_id', 'product_name', 'product_category', 'payment_type', 'qty', 'price', 'datetime', 'country', 'city', 'ecommerce_website_name', 'payment_txn_id', 'payment_txn_success', 'failure reason']
+    headers = ['order_id', 'customer_id', 'customer_name', 
+               'product_id', 'product_name', 'product_category', 
+               'payment_type', 'qty', 'price', 
+               'datetime', 'country', 'city', 
+               'ecommerce_website_name', 'payment_txn_id', 'payment_txn_success', 
+               'failure reason']
     out.writerow(headers)
 
     #creating list of random indices generated on a normal distribution
@@ -89,6 +93,13 @@ with open(OUT_PATH, 'w+', encoding="utf8", newline = '') as file:
         i = int(i)
         if i >= 0 and i < CUSTOMER_AND_PRODUCTS_LENGTH:
             randomAdjustedIndices.append(i)
+    
+    randomNormalQuantities = np.random.normal(5, 2.5, 1000)
+    randomQuantities = []
+    for i in randomNormalQuantities:
+        i = int(i)
+        if (i > 0):
+            randomQuantities.append(i)
 
     for i in range(OUT_LENGTH):
         #Randomly generated order ID
@@ -109,7 +120,8 @@ with open(OUT_PATH, 'w+', encoding="utf8", newline = '') as file:
         payment_type = random.choice(['Card', 'Internet Banking', 'UPI', 'Wallet'])
 
         #Random quantity between 1 and 10
-        qty = random.randint(1, 10)
+        qtyIndex = random.randint(0, len(randomQuantities)-1)
+        qty = randomQuantities[qtyIndex]
         
         #Random date between start (2012) and end (now)
         start = datetime.date(2022, 1, 1)
